@@ -1,0 +1,32 @@
+### Python ###
+__pycache__/
+*.py[cod]
+*$py.class
+
+venv/
+.venv/
+env/
+.env/
+
+dist/
+build/
+*.egg-info/
+
+### pycharm ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### macOS / Windows ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+### env ###
+.env
+.env.local
+*.key
