@@ -12,10 +12,8 @@ class UserInput(TypedDict):
 class MusicAgentState(TypedDict):
     inputs: UserInput
 
-    # 내부 사고 과정 (Internal Reasoning)
-    # LLM이 분석한 검색 조건
-    # {"min_bpm": 120, "target_energy": "high", "seed_genres": ["pop"]}
-    search_criteria: dict
+    # LLM이 분석한 검색 조건, 내부 사고 과정
+    search_criteria: dict # {"min_bpm": 120, "target_energy": "high", "seed_genres": ["pop"]}
 
     # outputs
     recommendations: List[str] # 음악 리스트
@@ -23,5 +21,4 @@ class MusicAgentState(TypedDict):
     retry_count: int
     is_sufficient: bool   # 목표 달성 여부 (True/False)
 
-    # 결과 저장소
-    final_result: Optional[dict]
+    final_result: Optional[dict] # 결과 저장소
