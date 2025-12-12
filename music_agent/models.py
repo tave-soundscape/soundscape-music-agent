@@ -1,7 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, Field
 
-# 1. 오타 방지를 위한 Enum 정의
+# Enum 정의
 class Location(str, Enum):
     GYM = "gym"
     CAFE = "cafe"
@@ -27,7 +27,7 @@ class Goal(str, Enum):
     CONSOLATION = "consolation"
     NEUTRAL = "neutral"
 
-# 2. 사용자 입력 객체 (Java의 DTO 역할)
+# 사용자 입력 객체
 class UserContext(BaseModel):
     location: Location = Field(..., description="장소")
     decibel_level: Decibel = Field(..., description="소음도")
