@@ -1,27 +1,28 @@
-from typing import TypedDict, List, Optional
+from typing import TypedDict, List, Dict, Any, Optional
 
-# 사용자 입력 데이터
-class UserInput(TypedDict):
-    location: str        # gym, cafe ...
-    decibel_level: str   # loud, quiet ...
-    goal: str            # focus, active ...
-    fav_artists: List[str]
-    fav_genres: List[str]
 
-# 에이전트 메모리
-class MusicAgentState(TypedDict):
-    inputs: UserInput
+class AgentState(TypedDict):
+    user_input: Dict[str, str]  # 사용자 입력
 
-    # 내부 사고 과정 (Internal Reasoning)
-    # LLM이 분석한 검색 조건
-    # {"min_bpm": 120, "target_energy": "high", "seed_genres": ["pop"]}
-    search_criteria: dict
+    # 실행 흐름 제어용
+    search_queries: Dict[str, List[str]]  # 검색할 태그들
+    candidate_tracks: List[Dict[str, Any]]  # 수집된 후보군 (누적됨)
+    verified_tracks: List[Dict[str, Any]]  # 검증 통과한 곡들
 
-    # outputs
-    recommendations: List[str] # 음악 리스트
-
-    retry_count: int
-    is_sufficient: bool   # 목표 달성 여부 (True/False)
-
-    # 결과 저장소
-    final_result: Optional[dict]
+    # 순환(Loop)을 위한 핵심 필드
+    feedback: Optional[str]  # Critic이 Planner에게 보내는 수정 요청사항
+    retry_count: int  # 현재 재시도 횟수 (0부터 시작)
+#
+# from typing import TypedDict, List, Dict, Any, Optional
+# from music_agent.models import UserContext  # 👈 import 추가
+#
+#
+# class AgentState(TypedDict):
+#     user_input: UserContext  # 👈 Dict 대신 객체 사용
+#
+#     # 나머지는 그대로 유지
+#     search_queries: Dict[str, List[str]]
+#     candidate_tracks: List[Dict[str, Any]]
+#     verified_tracks: List[Dict[str, Any]]
+#     feedback: Optional[str]
+#     retry_count: int
