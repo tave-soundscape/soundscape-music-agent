@@ -30,3 +30,5 @@ Desktop.ini
 .env
 .env.local
 *.key
+
+*.png
