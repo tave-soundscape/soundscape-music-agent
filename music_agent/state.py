@@ -1,24 +1,53 @@
-from typing import TypedDict, List, Optional
+from enum import Enum
+from typing import TypedDict, Annotated, List, Optional
+from langgraph.graph.message import add_messages
+import operator
+from pydantic import BaseModel, Field
 
-# 사용자 입력 데이터
-class UserInput(TypedDict):
-    location: str        # gym, cafe ...
-    decibel_level: str   # loud, quiet ...
-    goal: str            # focus, active ...
-    fav_artists: List[str]
-    fav_genres: List[str]
+class Location(str, Enum):
+    GYM = "gym"
+    CAFE = "cafe"
+    LIBRARY = "library"
+    HOME = "home"
+    MOVING = "moving"
+    PARK = "park"
+    CO_WORKING = "co-working"
 
-# 에이전트 메모리
-class MusicAgentState(TypedDict):
-    inputs: UserInput
+class Decibel(str, Enum):
+    QUIET = "quiet"
+    MODERATE = "moderate"
+    LOUD = "loud"
 
-    # LLM이 분석한 검색 조건, 내부 사고 과정
-    search_criteria: dict # {"min_bpm": 120, "target_energy": "high", "seed_genres": ["pop"]}
+class Goal(str, Enum):
+    FOCUS = "focus"
+    RELAX = "relax"
+    SLEEP = "sleep"
+    ACTIVE = "active"
+    ANGER = "anger"
+    CONSOLATION = "consolation"
+    NEUTRAL = "neutral"
 
-    # outputs
-    recommendations: List[str] # 음악 리스트
+# Artist, Track은 DTO 역할 하므로 BaseModel 활용
+class Artist(BaseModel):
+    atid: str = Field(description="Artist ID")
+    atn: str = Field(description="Artist Name")
 
-    retry_count: int
-    is_sufficient: bool   # 목표 달성 여부 (True/False)
+class Track(BaseModel):
+    tid: str = Field(description="Track ID")
+    tn: str = Field(description="Track Name")
+    tu: str = Field(description="Track URI")
+    ms: int = Field(description="Duration in milliseconds")
+    img: str = Field(description="Album Image URL")
+    at: List[Artist] = Field(description="List of Artists")
 
-    final_result: Optional[dict] # 결과 저장소
+class UserContext(TypedDict):
+  location: Location
+  goal: Goal
+  decibel: Decibel
+
+class AgentState(TypedDict):
+  user_context: UserContext
+  search_query: List[str]
+  messages: Annotated[list, add_messages]
+  candidate_tracks: Annotated[List[Track], operator.add]
+  final_tracks: List[Track]
