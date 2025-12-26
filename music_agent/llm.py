@@ -1,7 +1,9 @@
 from langchain_openai import ChatOpenAI
+from music_agent import config
 
-llm = ChatOpenAI(
-    model="gpt-4o-2024-11-20",
-    temperature=0.0,
-    streaming=True
+model = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
+    streaming=True,
+    api_key=config.OPENAI_API_KEY
 )
