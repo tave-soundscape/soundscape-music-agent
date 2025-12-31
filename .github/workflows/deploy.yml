@@ -39,28 +39,26 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script_stop: true
           script: |
-            # 1. 경로 정리 및 이동
+            # 1. 경로 이동 및 파일 정리
             rm -rf /home/ec2-user/music_agent/current
             mkdir -p /home/ec2-user/music_agent/current
-            
-            # 숨김 파일(.env 등)을 포함하여 모든 파일을 안전하게 이동
             find /home/ec2-user/music_agent/tobe -mindepth 1 -maxdepth 1 -exec mv -t /home/ec2-user/music_agent/current/ {} +
-            
             cd /home/ec2-user/music_agent/current
             
-            # 2. 가상환경 세팅 및 확실한 패키지 설치
+            # 2. 가상환경 재생성 및 '가상환경 내의 pip'를 직접 사용하여 설치
+            rm -rf venv
             python3 -m venv venv
-            source venv/bin/activate
-            pip install --upgrade pip
-            # uvicorn이 requirements.txt에 없을 경우를 대비해 명시적 설치도 고려해볼 수 있습니다.
-            pip install -r requirements.txt
+            ./venv/bin/pip install --upgrade pip
+            ./venv/bin/pip install -r requirements.txt
+            # uvicorn이 requirements.txt에 누락되었을 가능성을 대비해 명시적 설치 추가
+            ./venv/bin/pip install uvicorn gunicorn 
             
             # 3. 기존 프로세스 종료
             sudo fuser -k 8000/tcp || true
             
-            # 4. 실행 (PYTHONPATH를 현재 디렉토리로 고정)
-            # 현재 폴더(.)를 경로에 추가해야 music_agent 패키지를 인식합니다.
-            nohup bash -c "source venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:. && python server.py" > ./output.log 2>&1 &
+            # 4. 실행 (가상환경 내의 python 바이너리를 직접 호출)
+            # PYTHONPATH를 명시하여 music_agent 패키지를 인식하게 함
+            export PYTHONPATH=$PYTHONPATH:.
+            nohup ./venv/bin/python server.py > ./output.log 2>&1 &
             
-            # 5. 임시 폴더 삭제
             rm -rf /home/ec2-user/music_agent/tobe
