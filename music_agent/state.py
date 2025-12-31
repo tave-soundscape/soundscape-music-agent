@@ -36,8 +36,10 @@ class Track(BaseModel):
     tid: str = Field(description="Track ID")
     tn: str = Field(description="Track Name")
     tu: str = Field(description="Track URI")
+    turl: str = Field(description="Track External Url")
     ms: int = Field(description="Duration in milliseconds")
     img: str = Field(description="Album Image URL")
+    an: str = Field(description="앨범 이름")
     at: List[Artist] = Field(description="List of Artists")
 
 class UserContext(TypedDict):
