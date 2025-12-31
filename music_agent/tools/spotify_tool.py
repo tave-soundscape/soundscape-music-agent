@@ -25,11 +25,11 @@ def search_playlists(query: str, market: str = "KR", limit: int = 3) -> List[Dic
 
 def collect_playlist_tracks(playlist_id: str) -> list[Track]:
     results = sp.playlist(playlist_id=playlist_id, market="KR",
-                        fields="tracks.items(track(id,name,duration_ms,uri,album(id,name,release_date,images,uri,),artists(id,name)))")
+                        fields="tracks.items(track(id,name,duration_ms,uri,external_urls,album(id,name,release_date,images,uri,),artists(id,name)))")
     items = results.get("tracks", {}).get("items", [])
     return [
     Track(
-        tid=track["id"], tn=track["name"], tu=track["uri"], ms=track["duration_ms"],
+        tid=track["id"], tn=track["name"], tu=track["uri"],turl=track["external_urls"]["spotify"], ms=track["duration_ms"],
         ai=track["album"]["id"], an=track["album"]["name"], au=track["album"]["uri"],
         img=track["album"]["images"][0].get("url") if track["album"]["images"] else None,
         at=[Artist(atid=a["id"], atn=a["name"]) for a in track["artists"]]
