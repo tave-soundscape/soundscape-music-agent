@@ -1,0 +1,62 @@
+name: Deploy Python Agent To EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github Repository 파일 불러오기
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_PROPERTIES }}" > .env
+
+      # 2. SCP로 .env를 포함한 파일 전송
+      - name: SCP로 파일 전송 (music_agent 패키지 및 서버 소스)
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "./*, !venv, !__pycache__"
+          target: "/home/ec2-user/music_agent/tobe"
+
+      - name: SSH 접속 및 서버 재시작
+        uses: appleboy/ssh-action@v1.2.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            # 1. 경로 정리 및 이동
+            rm -rf /home/ec2-user/music_agent/current
+            mkdir -p /home/ec2-user/music_agent/current
+            mv /home/ec2-user/music_agent/tobe/* /home/ec2-user/music_agent/current/
+            cd /home/ec2-user/music_agent/current
+
+            # 2. 가상환경 세팅
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            # 3. 기존 프로세스 종료 (8000포트)
+            sudo fuser -k 8000/tcp || true
+
+            # 4. 실행 (nohup으로 백그라운드 유지)
+            # server.py가 루트에 있으므로 venv 내의 python으로 실행
+            nohup venv/bin/python server.py > ./output.log 2>&1 &
+            
+            # 5. 임시 파일 정리
+            rm -rf /home/ec2-user/music_agent/tobe
