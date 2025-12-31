@@ -45,20 +45,19 @@ jobs:
             find /home/ec2-user/music_agent/tobe -mindepth 1 -maxdepth 1 -exec mv -t /home/ec2-user/music_agent/current/ {} +
             cd /home/ec2-user/music_agent/current
             
-            # 2. 가상환경 재생성 및 '가상환경 내의 pip'를 직접 사용하여 설치
+            # 2. 가상환경 재생성 및 캐시 없이 설치 (메모리 부족 방지)
             rm -rf venv
             python3 -m venv venv
             ./venv/bin/pip install --upgrade pip
-            ./venv/bin/pip install -r requirements.txt
-            # uvicorn이 requirements.txt에 누락되었을 가능성을 대비해 명시적 설치 추가
-            ./venv/bin/pip install uvicorn gunicorn 
+            # --no-cache-dir를 사용하여 프리티어 메모리 부족 문제를 예방합니다.
+            ./venv/bin/pip install --no-cache-dir -r requirements.txt
             
             # 3. 기존 프로세스 종료
             sudo fuser -k 8000/tcp || true
             
-            # 4. 실행 (가상환경 내의 python 바이너리를 직접 호출)
-            # PYTHONPATH를 명시하여 music_agent 패키지를 인식하게 함
-            export PYTHONPATH=$PYTHONPATH:.
-            nohup ./venv/bin/python server.py > ./output.log 2>&1 &
+            # 4. 실행 (절대 경로와 PYTHONPATH 명시)
+            # 쉘 환경의 영향을 받지 않도록 가상환경의 python을 직접 실행합니다.
+            export PYTHONPATH=/home/ec2-user/music_agent/current
+            nohup /home/ec2-user/music_agent/current/venv/bin/python server.py > ./output.log 2>&1 &
             
             rm -rf /home/ec2-user/music_agent/tobe
