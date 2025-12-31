@@ -39,21 +39,32 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script_stop: true
           script: |
+            # 1. 작업 디렉토리 생성 및 이동
             mkdir -p /home/ec2-user/music_agent/current
             
-            cp -r /home/ec2-user/music_agent/tobe/* /home/ec2-user/music_agent/current/
+            # 2. tobe에 전송된 파일을 current로 이동 (이 과정이 꼭 필요합니다)
+            # 숨김 파일(.env 등)까지 포함하여 이동
+            cp -r /home/ec2-user/music_agent/tobe/. /home/ec2-user/music_agent/current/
             cd /home/ec2-user/music_agent/current
             
-            # 기존 venv 삭제 후 재생성
+            # 3. Python 3.11 설치 확인 및 가상환경 생성
+            sudo dnf install python3.11 -y 
+            
+            # 기존 venv가 있다면 삭제 후 3.11로 재생성
             rm -rf venv
-            python3 -m venv venv
+            python3.11 -m venv venv
             
-            ./venv/bin/python -m pip install --upgrade pip
-            ./venv/bin/python -m pip install --no-cache-dir -r requirements.txt
+            # 4. 패키지 설치
+            ./venv/bin/pip install --upgrade pip
+            ./venv/bin/pip install --no-cache-dir -r requirements.txt
             
+            # 5. 기존 서버 종료 (8000포트)
             sudo fuser -k 8000/tcp || true
+            sleep 2
             
-            export PYTHONPATH=/home/ec2-user/music_agent/current
+            # 6. 서버 실행 (PYTHONPATH 설정으로 music_agent 패키지 인식 보장)
+            export PYTHONPATH=$PYTHONPATH:$(pwd)
             nohup ./venv/bin/python server.py > ./output.log 2>&1 &
             
+            # 7. 임시 폴더 정리
             rm -rf /home/ec2-user/music_agent/tobe
