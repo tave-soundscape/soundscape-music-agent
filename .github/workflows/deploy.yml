@@ -42,22 +42,25 @@ jobs:
             # 1. 경로 정리 및 이동
             rm -rf /home/ec2-user/music_agent/current
             mkdir -p /home/ec2-user/music_agent/current
-            mv /home/ec2-user/music_agent/tobe/* /home/ec2-user/music_agent/current/
+            
+            # 숨김 파일(.env 등)을 포함하여 모든 파일을 안전하게 이동
+            find /home/ec2-user/music_agent/tobe -mindepth 1 -maxdepth 1 -exec mv -t /home/ec2-user/music_agent/current/ {} +
+            
             cd /home/ec2-user/music_agent/current
-
-            # 2. 가상환경 세팅
+            
+            # 2. 가상환경 세팅 및 확실한 패키지 설치
             python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip
+            # uvicorn이 requirements.txt에 없을 경우를 대비해 명시적 설치도 고려해볼 수 있습니다.
             pip install -r requirements.txt
-
-            # 3. 기존 프로세스 종료 (8000포트)
-            sudo fuser -k 8000/tcp || true
-
-            # 4. 실행 (nohup으로 백그라운드 유지)
-            # server.py가 루트에 있으므로 venv 내의 python으로 실행
-            # bash -c를 사용해 가상환경을 활성화(source)한 상태에서 실행하도록 묶어줍니다.
-            nohup bash -c "source venv/bin/activate && python server.py" > ./output.log 2>&1 &
             
-            # 5. 임시 파일 정리
+            # 3. 기존 프로세스 종료
+            sudo fuser -k 8000/tcp || true
+            
+            # 4. 실행 (PYTHONPATH를 현재 디렉토리로 고정)
+            # 현재 폴더(.)를 경로에 추가해야 music_agent 패키지를 인식합니다.
+            nohup bash -c "source venv/bin/activate && export PYTHONPATH=\$PYTHONPATH:. && python server.py" > ./output.log 2>&1 &
+            
+            # 5. 임시 폴더 삭제
             rm -rf /home/ec2-user/music_agent/tobe
