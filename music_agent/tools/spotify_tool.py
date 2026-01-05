@@ -29,7 +29,9 @@ def collect_playlist_tracks(playlist_id: str) -> list[Track]:
     items = results.get("tracks", {}).get("items", [])
     return [
     Track(
-        tid=track["id"], tn=track["name"], tu=track["uri"],turl=track["external_urls"]["spotify"], ms=track["duration_ms"],
+        tid=track["id"], tn=track["name"], tu=track["uri"],
+        turl=(track.get("external_urls") or {}).get("spotify"),
+        ms=track["duration_ms"],
         ai=track["album"]["id"], an=track["album"]["name"], au=track["album"]["uri"],
         img=track["album"]["images"][0].get("url") if track["album"]["images"] else None,
         at=[Artist(atid=a["id"], atn=a["name"]) for a in track["artists"]]
