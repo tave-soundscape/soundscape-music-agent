@@ -53,3 +53,4 @@ class AgentState(TypedDict):
   messages: Annotated[list, add_messages]
   candidate_tracks: Annotated[List[Track], operator.add]
   final_tracks: List[Track]
+  recommendation_reason: str
