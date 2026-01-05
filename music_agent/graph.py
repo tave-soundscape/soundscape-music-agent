@@ -1,13 +1,16 @@
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import tools_condition
 from music_agent.state import AgentState
-from music_agent.nodes import call_model, tool_node, random_select_node
+from music_agent.nodes import call_model, tool_node, random_select_node, generate_reason_node, filter_remix_tracks_node
 
 workflow = StateGraph(AgentState)
 
 workflow.add_node("agent", call_model)
 workflow.add_node("tools", tool_node)
 workflow.add_node("random_select", random_select_node)
+workflow.add_node("generate_reason", generate_reason_node)
+workflow.add_node("remix_track_filter", filter_remix_tracks_node)
+
 
 workflow.set_entry_point("agent")
 
@@ -15,6 +18,8 @@ workflow.set_entry_point("agent")
 workflow.add_conditional_edges("agent", tools_condition)
 
 workflow.add_edge("tools", "random_select")
-workflow.add_edge("random_select", END)
+workflow.add_edge("random_select", "remix_track_filter")
+workflow.add_edge("remix_track_filter", "generate_reason")
+workflow.add_edge("generate_reason", END)
 
 app = workflow.compile()

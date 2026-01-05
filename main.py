@@ -18,7 +18,8 @@ def run_music_agent():
     final_state = app.invoke(inputs)
 
     print(f"\n 최종 추천 곡 개수: {len(final_state['final_tracks'])}곡")
-    print(final_state["search_query"])
+    print(f" LLM의 검색어 선정 이유: {final_state["recommendation_reason"]}")
+    print("검색어: ", final_state["search_query"])
     print("-" * 30)
     for i, track in enumerate(final_state['final_tracks'], 1):
         artists = ", ".join([a.atn for a in track.at])
