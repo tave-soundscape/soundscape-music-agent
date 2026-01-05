@@ -7,8 +7,7 @@ def random_select_node(state: AgentState):
     unique_tracks_dict = {track.tid: track for track in candidates}
     unique_tracks = list(unique_tracks_dict.values())
 
-    #TODO:  일단엔진에서 10곡 바로 추천
-    target_count = 10
+    target_count = 150
 
     if len(unique_tracks) <= target_count:
         selected = unique_tracks
