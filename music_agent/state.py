@@ -26,6 +26,7 @@ class Goal(str, Enum):
     ANGER = "anger"
     CONSOLATION = "consolation"
     NEUTRAL = "neutral"
+    STABILIZATION = "stabilization"
 
 # Artist, Track은 DTO 역할 하므로 BaseModel 활용
 class Artist(BaseModel):
@@ -42,13 +43,26 @@ class Track(BaseModel):
     an: str = Field(description="앨범 이름")
     at: List[Artist] = Field(description="List of Artists")
 
+class ArtistMetadata(BaseModel):
+    name: str
+    genres: List[str]
+    popularity: int
+
 class UserContext(TypedDict):
   location: Location
   goal: Goal
   decibel: Decibel
+  preferred_artists: List[str]
+
+class UserPersona(TypedDict):
+    preferred_genres: List[str]
+    averge_popularity: float         # 인기도 평균 (음악 성향 주류/비주류 판단 지표)
+    taste_summary: str               # LLM이 분석한 한 줄 요약
+    artists_details: List[ArtistMetadata] # 검색된 아티스트 상세 정보
 
 class AgentState(TypedDict):
   user_context: UserContext
+  user_persona: UserPersona
   search_query: List[str]
   messages: Annotated[list, add_messages]
   candidate_tracks: Annotated[List[Track], operator.add]
