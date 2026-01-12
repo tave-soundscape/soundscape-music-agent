@@ -1,4 +1,4 @@
-from music_agent.tools.spotify_tool import search_artist
+from music_agent.tools.spotify_tool import search_artist, search_artist_tracks_by_context
 from music_agent.llm import model
 from music_agent.state import AgentState
 
@@ -56,4 +56,30 @@ def preference_analyzer_node(state: AgentState):
             "taste_summary": response.content.strip(),
             "artist_details": artist_details
         }
+    }
+
+def preference_search_node(state: AgentState):
+    preferred_artists = state["user_context"].get("preferred_artists", [])
+    location = state["user_context"].get("location")
+    goal = state["user_context"].get("goal")
+
+    all_preference_tracks = []
+    seen_ids = set()
+
+    for artist_name in preferred_artists:
+        # 각 가수별로 '위치'와 '목표'를 섞어서 직접 트랙 검색 (10곡씩)
+        tracks = search_artist_tracks_by_context(
+            artist_name=artist_name,
+            location=location.value if hasattr(location, 'value') else location,
+            goal=goal.value if hasattr(goal, 'value') else goal,
+            limit=10
+        )
+
+        for track in tracks:
+            if track.tid not in seen_ids:
+                all_preference_tracks.append(track)
+                seen_ids.add(track.tid)
+
+    return {
+        "preference_candidates": all_preference_tracks
     }
