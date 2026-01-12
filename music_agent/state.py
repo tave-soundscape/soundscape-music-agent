@@ -65,6 +65,7 @@ class AgentState(TypedDict):
   user_persona: UserPersona
   search_query: List[str]
   messages: Annotated[list, add_messages]
-  candidate_tracks: Annotated[List[Track], operator.add]
+  context_candidates: Annotated[List[Track], operator.add]
+  preference_candidates: Annotated[List[Track], operator.add]
   final_tracks: List[Track]
   recommendation_reason: str
