@@ -10,7 +10,7 @@ def get_value(obj):
     # .value 속성이 있으면(Enum이면) 그거 사용, 없으면 그대로 반환
     return obj.value if hasattr(obj, 'value') else obj
 
-def call_model(state: AgentState):
+def context_agent_node(state: AgentState):
   context = state["user_context"]
   context_str = (
       f"현재 상황: 위치={get_value(context['location'])}, "
