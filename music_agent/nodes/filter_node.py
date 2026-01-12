@@ -3,18 +3,20 @@ from music_agent.state import AgentState
 def filter_remix_tracks_node(state: AgentState):
     candidates = state["final_tracks"]
 
-    # TODO: 디버깅용이므로, main 반영 전에 전에 지우기
-    print(f"\n 리믹스 필터 적용 전 추천 곡 개수: {len(candidates)}곡")
-    print("-" * 30)
-    for i, track in enumerate(candidates, 1):
-        artists = ", ".join([a.atn for a in track.at])
-        print(f"{i}. {track.tn} - {artists}")
+    exclude_title_keywords = ["remix", "remaster", "mix", "master", "live"]
+    exclude_artist_names = ["한의 노래"]
 
-    exclude_keywords = ["remix", "remaster"]
+    filtered_tracks = []
 
-    filtered_tracks = [
-        track for track in candidates
-        if not any(word in track.tn.lower() for word in exclude_keywords)
-    ]
+    for track in candidates:
+        # 곡 제목에 금지 키워드가 있는지 확인
+        title_lower = track.tn.lower()
+        has_forbidden_title = any(word in title_lower for word in exclude_title_keywords)
+
+        # 아티스트 목록 중에 금지된 가수가 있는지 확인
+        has_forbidden_artist = any(artist.atn == name for artist in track.at for name in exclude_artist_names)
+
+        if not has_forbidden_title and not has_forbidden_artist:
+            filtered_tracks.append(track)
 
     return {"final_tracks": filtered_tracks}
