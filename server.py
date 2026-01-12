@@ -5,6 +5,9 @@ from music_agent.graph import app as music_agent_app
 from music_agent.state import Track
 from pydantic import BaseModel, Field
 
+from typing import List, Optional
+from music_agent.state import Track, UserPersona
+
 # FastAPI 앱
 server = FastAPI(
     title="Soundscape Music Agent Server",
@@ -16,6 +19,7 @@ class UserContext(BaseModel):
     location: str = Field(..., description="위치 (gym, cafe, library, home 등)")
     goal: str = Field(..., description="목적 (focus, relax, active 등)")
     decibel: str = Field(..., description="소음 정도 (quiet, moderate, loud)")
+    preferred_artists: List[str] = Field(default=[], description="선호하는 아티스트 이름 리스트 (최대 3명)")
 
 # Request DTO
 class MusicRequest(BaseModel):
@@ -24,7 +28,9 @@ class MusicRequest(BaseModel):
 
 # Response DTO
 class MusicResponse(BaseModel):
-    final_tracks: list[Track] = Field(..., description="최종 추천된 150곡 리스트")
+    final_tracks: List[Track] = Field(..., description="최종 선별된 20곡 리스트")
+    recommendation_reason: str = Field(..., description="LLM이 작성한 추천 사유")
+    user_persona: Optional[dict] = Field(None, description="분석된 사용자 취향 요약 정보")
 
 # 3. API 등록
 add_routes(

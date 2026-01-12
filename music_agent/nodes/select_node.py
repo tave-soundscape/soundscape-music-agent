@@ -1,21 +1,37 @@
 import random
 from music_agent.state import AgentState
 
-def random_select_node(state: AgentState):
-    candidates = state.get("candidate_tracks", [])
+def selection_node(state: AgentState):
+    ctx_candidates = state.get("context_candidates", [])
+    pref_candidates = state.get("preference_candidates", [])
 
-    unique_tracks_dict = {track.tid: track for track in candidates}
-    unique_tracks = list(unique_tracks_dict.values())
+    def get_unique_tracks(tracks):
+        unique_dict = {t.tid: t for t in tracks}
+        return list(unique_dict.values())
 
-    #TODO:  일단엔진에서 10곡 바로 추천
-    target_count = 10
+    unique_ctx = get_unique_tracks(ctx_candidates)
+    unique_pref = get_unique_tracks(pref_candidates)
 
-    if len(unique_tracks) <= target_count:
-        selected = unique_tracks
+    target_pref_count = 5
+    target_ctx_count = 15
+
+    if len(unique_pref) <= target_pref_count:
+        selected_pref = unique_pref
     else:
-        selected = random.sample(unique_tracks, target_count)
+        selected_pref = random.sample(unique_pref, target_pref_count)
+
+    needed_ctx_count = 20 - len(selected_pref)
+
+    if len(unique_ctx) <= needed_ctx_count:
+        selected_ctx = unique_ctx
+    else:
+        selected_ctx = random.sample(unique_ctx, needed_ctx_count)
+
+    final_selection = selected_pref + selected_ctx
+    random.shuffle(final_selection)
 
     return {
-        "final_tracks": selected,
-        "candidate_tracks": []
+        "final_tracks": final_selection,
+        "context_candidates": [],
+        "preference_candidates": []
     }
