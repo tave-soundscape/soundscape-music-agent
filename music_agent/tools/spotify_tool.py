@@ -109,7 +109,9 @@ def get_artist_top_tracks(artist_name: str):
 def search_artist_tracks_by_context(artist_name: str, location: str, goal: str, limit: int = 5) -> List[Track]:
     """가수명과 현재 상황(위치, 목표)을 조합하여 최적의 트랙을 검색합니다."""
     # query = f"{artist_name} {location} {goal}"
-    query = f"{artist_name} {location}"
+
+
+    query = f"{artist_name}"
 
     results = sp.search(q=query, type="track", limit=limit, market="KR")
     items = results.get("tracks", {}).get("items", [])
