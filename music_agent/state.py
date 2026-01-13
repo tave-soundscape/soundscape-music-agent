@@ -39,8 +39,11 @@ class Track(BaseModel):
     tu: str = Field(description="Track URI")
     turl: str = Field(description="Track External Url")
     ms: int = Field(description="Duration in milliseconds")
-    img: str = Field(description="Album Image URL")
+    ai: str = Field(description="Album ID")
     an: str = Field(description="앨범 이름")
+    au: str = Field(description="Album URI")
+    img: str = Field(description="Album Image URL")
+    rd: str = Field(description="Album Release Date (YYYY-MM-DD or YYYY)")
     at: List[Artist] = Field(description="List of Artists")
 
 class ArtistMetadata(BaseModel):
@@ -63,9 +66,14 @@ class UserPersona(TypedDict):
 class AgentState(TypedDict):
   user_context: UserContext
   user_persona: UserPersona
-  search_query: List[str]
+  search_query: Annotated[List[str], operator.add]  # 검색어 누적
   messages: Annotated[list, add_messages]
   context_candidates: Annotated[List[Track], operator.add]
   preference_candidates: Annotated[List[Track], operator.add]
   final_tracks: List[Track]
   recommendation_reason: str
+  # 순환 그래프 제어 변수
+  iteration_count: int
+  validation_feedback: dict  # 검증 결과 상세 정보
+  needs_more_preference: bool  # 선호 아티스트 곡 추가 필요 여부
+  needs_recent_tracks: bool  # 신곡 추가 필요 여부
