@@ -2,12 +2,12 @@ import uvicorn
 from fastapi import FastAPI
 from langserve import add_routes
 from music_agent.graph import app as music_agent_app
-from music_agent.state import Track
 from pydantic import BaseModel, Field
 
 from typing import List, Optional
-from music_agent.state import Track, UserPersona
+from music_agent.state import Track
 
+# TODO: 최종 개발 후 응답 필드 fit하게 수정
 # FastAPI 앱
 server = FastAPI(
     title="Soundscape Music Agent Server",
@@ -30,6 +30,7 @@ class MusicRequest(BaseModel):
 class MusicResponse(BaseModel):
     final_tracks: List[Track] = Field(..., description="최종 선별된 20곡 리스트")
     recommendation_reason: str = Field(..., description="LLM이 작성한 추천 사유")
+    search_query: List[str] = Field(default=[], description="에이전트가 생성하여 사용한 검색어 리스트")
     user_persona: Optional[dict] = Field(None, description="분석된 사용자 취향 요약 정보")
 
 # 3. API 등록
