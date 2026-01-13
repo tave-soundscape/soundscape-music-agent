@@ -59,7 +59,7 @@ class UserContext(TypedDict):
 
 class UserPersona(TypedDict):
     preferred_genres: List[str]
-    averge_popularity: float         # 인기도 평균 (음악 성향 주류/비주류 판단 지표)
+    average_popularity: float         # 인기도 평균 (음악 성향 주류/비주류 판단 지표)
     taste_summary: str               # LLM이 분석한 한 줄 요약
     artists_details: List[ArtistMetadata] # 검색된 아티스트 상세 정보
 
