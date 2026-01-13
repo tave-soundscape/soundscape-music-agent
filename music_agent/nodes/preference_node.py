@@ -1,9 +1,23 @@
 from music_agent.tools.spotify_tool import search_artist, search_artist_tracks_by_context
 from music_agent.llm import model
 from music_agent.state import AgentState
+from music_agent.constants import DEFAULT_TRACK_LIMIT, ENHANCED_TRACK_LIMIT
 
 
 def preference_analyzer_node(state: AgentState):
+    """
+    선호 아티스트 분석 및 사용자 페르소나 생성 노드
+
+    1. 선호 아티스트를 Spotify에서 검색
+    2. 장르, 인기도 정보 수집
+    3. LLM이 사용자 음악 취향을 한 문장으로 요약
+
+    Args:
+        state: AgentState 객체
+
+    Returns:
+        dict: user_persona (preferred_genres, average_popularity, taste_summary, artist_details)
+    """
     artists = state["user_context"].get("preferred_artists", [])
     artist_details = []
 
@@ -59,20 +73,52 @@ def preference_analyzer_node(state: AgentState):
     }
 
 def preference_search_node(state: AgentState):
+    """
+    선호 아티스트 기반 트랙 검색 노드
+
+    일반 모드: 모든 선호 아티스트를 각 10곡씩 검색
+    순환 모드: 부족한 아티스트만 20곡씩 집중 검색
+
+    Args:
+        state: AgentState 객체
+
+    Returns:
+        dict: preference_candidates, search_query
+    """
     preferred_artists = state["user_context"].get("preferred_artists", [])
     location = state["user_context"].get("location")
     goal = state["user_context"].get("goal")
 
+    # 순환 그래프: 선호 아티스트 부족 시 limit 증가
+    needs_more_preference = state.get("needs_more_preference", False)
+    validation_feedback = state.get("validation_feedback", {})
+
+    # 부족한 아티스트만 집중 검색
+    missing_artists = validation_feedback.get("missing_artists", [])
+
+    # 검색 대상 결정
+    if needs_more_preference and missing_artists:
+        # 부족한 아티스트만 검색 (limit 증가)
+        search_artists = missing_artists
+        limit_per_artist = ENHANCED_TRACK_LIMIT
+    else:
+        # 일반 검색 (모든 선호 아티스트)
+        search_artists = preferred_artists
+        limit_per_artist = DEFAULT_TRACK_LIMIT
+
     all_preference_tracks = []
     seen_ids = set()
 
-    for artist_name in preferred_artists:
-        # 각 가수별로 '위치'와 '목표'를 섞어서 직접 트랙 검색 (10곡씩)
+    # 검색한 아티스트 쿼리 기록
+    preference_queries = []
+
+    for artist_name in search_artists:
+        # 각 가수별로 '위치'와 '목표'를 섞어서 직접 트랙 검색
         tracks = search_artist_tracks_by_context(
             artist_name=artist_name,
             location=location.value if hasattr(location, 'value') else location,
             goal=goal.value if hasattr(goal, 'value') else goal,
-            limit=10
+            limit=limit_per_artist
         )
 
         for track in tracks:
@@ -80,6 +126,10 @@ def preference_search_node(state: AgentState):
                 all_preference_tracks.append(track)
                 seen_ids.add(track.tid)
 
+        # 검색한 아티스트를 쿼리 목록에 추가
+        preference_queries.append(f"[선호 아티스트] {artist_name}")
+
     return {
-        "preference_candidates": all_preference_tracks
+        "preference_candidates": all_preference_tracks,
+        "search_query": preference_queries
     }
