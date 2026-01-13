@@ -12,8 +12,8 @@ def selection_node(state: AgentState):
     unique_ctx = get_unique_tracks(ctx_candidates)
     unique_pref = get_unique_tracks(pref_candidates)
 
-    target_pref_count = 5
-    target_ctx_count = 15
+    target_pref_count = 7
+    target_ctx_count = 13
 
     if len(unique_pref) <= target_pref_count:
         selected_pref = unique_pref
