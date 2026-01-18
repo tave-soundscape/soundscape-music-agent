@@ -33,7 +33,7 @@ def context_agent_node(state: AgentState):
       if preferred_genres:
           genres = ", ".join(preferred_genres[:5])  # 최대 5개
           context_str += f"\n선호 장르: {genres}"
-          context_str += f"\n→ Focus 상황이라도 이 장르의 차분한 버전을 검색에 포함하세요!"
+          context_str += f"\n→ 선호 장르를 상황에 맞게 변형하여 검색에 포함하세요."
 
   # ...existing code...
   needs_recent_tracks = state.get("needs_recent_tracks", False)
