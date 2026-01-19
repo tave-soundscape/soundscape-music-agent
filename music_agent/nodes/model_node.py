@@ -3,6 +3,9 @@ from music_agent.state import AgentState
 from music_agent.prompt import SYSTEM_PROMPT
 from music_agent.tools import tools
 from music_agent.llm import model
+from music_agent.constants import (
+    MIN_RECENT_TRACK_RATIO
+)
 
 model_with_tools = model.bind_tools(tools)
 
@@ -30,7 +33,7 @@ def context_agent_node(state: AgentState):
       if preferred_genres:
           genres = ", ".join(preferred_genres[:5])  # 최대 5개
           context_str += f"\n선호 장르: {genres}"
-          context_str += f"\n→ Focus 상황이라도 이 장르의 차분한 버전을 검색에 포함하세요!"
+          context_str += f"\n→ 선호 장르를 상황에 맞게 변형하여 검색에 포함하세요."
 
   # ...existing code...
   needs_recent_tracks = state.get("needs_recent_tracks", False)
@@ -40,8 +43,8 @@ def context_agent_node(state: AgentState):
 
   if needs_recent_tracks:
       recent_ratio = validation_feedback.get("recent_track_ratio", 0)
-      if recent_ratio < 0.3:
-          additional_instructions += "\n\n[중요] 신곡이 부족합니다. 반드시 '2025', '2026', '최신', 'new', 'latest' 키워드를 포함한 검색어를 생성하세요."
+      if recent_ratio < MIN_RECENT_TRACK_RATIO:
+          additional_instructions += "\n\n[중요] 신곡이 부족합니다. 반드시 '최신', 'new', 'latest' 키워드를 포함한 검색어를 생성하세요."
 
       missing_genres = validation_feedback.get("missing_genres", [])
       if missing_genres:

@@ -1,4 +1,4 @@
-from music_agent.tools.spotify_tool import search_artist, search_artist_tracks_by_context
+from music_agent.tools.spotify_tool import search_artist, search_artist_tracks_by_context, spotify_thread_pool
 from music_agent.llm import model
 from music_agent.state import AgentState
 from music_agent.constants import DEFAULT_TRACK_LIMIT, ENHANCED_TRACK_LIMIT
@@ -21,13 +21,15 @@ def preference_analyzer_node(state: AgentState):
     artists = state["user_context"].get("preferred_artists", [])
     artist_details = []
 
-    for name in artists:
+    # 병렬로 아티스트 정보 검색
+    def fetch_artist_info(name):
         try:
-            info = search_artist(name)
-            if info:
-                artist_details.append(info)
-        except Exception as e:
-            continue
+            return search_artist(name)
+        except Exception:
+            return None
+
+    futures = [spotify_thread_pool.submit(fetch_artist_info, name) for name in artists]
+    artist_details = [future.result() for future in futures if future.result() is not None]
 
     if not artist_details:
         return {
@@ -112,15 +114,25 @@ def preference_search_node(state: AgentState):
     # 검색한 아티스트 쿼리 기록
     preference_queries = []
 
-    for artist_name in search_artists:
-        # 각 가수별로 '위치'와 '목표'를 섞어서 직접 트랙 검색
-        tracks = search_artist_tracks_by_context(
-            artist_name=artist_name,
-            location=location.value if hasattr(location, 'value') else location,
-            goal=goal.value if hasattr(goal, 'value') else goal,
-            limit=limit_per_artist
-        )
+    # 병렬로 아티스트별 트랙 검색
+    location_value = location.value if hasattr(location, 'value') else location
+    goal_value = goal.value if hasattr(goal, 'value') else goal
 
+    def fetch_artist_tracks(artist_name):
+        try:
+            return artist_name, search_artist_tracks_by_context(
+                artist_name=artist_name,
+                location=location_value,
+                goal=goal_value,
+                limit=limit_per_artist
+            )
+        except Exception:
+            return artist_name, []
+
+    futures = [spotify_thread_pool.submit(fetch_artist_tracks, name) for name in search_artists]
+
+    for future in futures:
+        artist_name, tracks = future.result()
         for track in tracks:
             if track.tid not in seen_ids:
                 all_preference_tracks.append(track)

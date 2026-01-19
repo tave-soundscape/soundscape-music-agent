@@ -6,6 +6,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool, InjectedToolCallId
 from langgraph.types import Command
 from typing import Annotated
+from concurrent.futures import ThreadPoolExecutor
 from music_agent import config
 from music_agent.constants import (
     PLAYLIST_SEARCH_LIMIT,
@@ -14,6 +15,11 @@ from music_agent.constants import (
     DEFAULT_MARKET
 )
 from music_agent.spotify_helpers import create_track_from_spotify_data
+
+# Spotify API 호출용 전역 스레드풀
+# 동시 접속자 10명 기준, 노드당 최대 3-9개 병렬 호출 예상
+# 50개로 충분한 여유 확보 (외부 API I/O 대기용이므로 CPU 부담 없음)
+spotify_thread_pool = ThreadPoolExecutor(max_workers=50, thread_name_prefix="spotify-api-executor")
 
 auth_manager = SpotifyClientCredentials(
     client_id=config.SPOTIPY_CLIENT_ID,
@@ -65,8 +71,17 @@ def make_playlist(
     res = []
     res_playlists = search_playlists(query)
 
-    for pl in res_playlists:
-        tracks = collect_playlist_tracks(pl.get("id"))
+    # 병렬로 플레이리스트 트랙 수집
+    def fetch_playlist_tracks(pl):
+        try:
+            return collect_playlist_tracks(pl.get("id"))
+        except Exception:
+            return []
+
+    futures = [spotify_thread_pool.submit(fetch_playlist_tracks, pl) for pl in res_playlists]
+
+    for future in futures:
+        tracks = future.result()
         for track in tracks:
             if track.tid not in seen_id:
                 res.append(track)
@@ -89,7 +104,7 @@ def make_playlist(
 
 def search_artist_tracks_by_context(artist_name: str, location: str, goal: str, limit: int = 5) -> List[Track]:
     """가수명과 현재 상황(위치, 목표)을 조합하여 최적의 트랙을 검색합니다."""
-    query = f"{artist_name} {location}"
+    query = f"{artist_name}'s song in {location}"
 
     results = sp.search(q=query, type="track", limit=limit, market=DEFAULT_MARKET)
     items = results.get("tracks", {}).get("items", [])
