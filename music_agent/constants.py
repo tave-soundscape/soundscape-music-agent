@@ -1,5 +1,5 @@
 # 순환 그래프 설정
-MAX_ITERATION_COUNT = 2  # 최대 재시도 횟수
+MAX_ITERATION_COUNT = 1  # 최대 재시도 횟수
 
 # 선곡 설정
 TARGET_FINAL_TRACK_COUNT = 20  # 최종 추천 곡 수
