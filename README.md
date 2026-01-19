@@ -14,11 +14,15 @@
 - 리믹스/커버곡 자동 필터링
 - LLM 기반 추천 사유 생성
 
-## 시스템 아키텍처
+## 에이전트 구조
 
-LangGraph를 사용한 순환형 멀티 에이전트 워크플로우:
+<img width="506" height="1000" alt="agent_graph" src="https://github.com/user-attachments/assets/3fdf6971-f992-4fb5-beb2-5ff1de0c680d" />
+
+LangGraph를 사용한 순환형 에이전트 워크플로우:
 
 1. **analyze_preference**: 선호 아티스트 분석 및 페르소나 생성
+  <img width="657" height="313" alt="image" src="https://github.com/user-attachments/assets/de6f0864-6dda-45fb-9a11-673dc3e9e901" />
+
 2. **context_agent**: 컨텍스트 기반 검색어 생성
 3. **tools**: Spotify API를 통한 트랙 검색
 4. **preference_search**: 선호 아티스트 관련 트랙 추가 검색
