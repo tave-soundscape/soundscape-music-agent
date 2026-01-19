@@ -104,7 +104,7 @@ def make_playlist(
 
 def search_artist_tracks_by_context(artist_name: str, location: str, goal: str, limit: int = 5) -> List[Track]:
     """가수명과 현재 상황(위치, 목표)을 조합하여 최적의 트랙을 검색합니다."""
-    query = f"{artist_name}'s song in {location}"
+    query = f"{artist_name}"
 
     results = sp.search(q=query, type="track", limit=limit, market=DEFAULT_MARKET)
     items = results.get("tracks", {}).get("items", [])
