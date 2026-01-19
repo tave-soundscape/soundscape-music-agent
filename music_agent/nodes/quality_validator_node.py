@@ -6,8 +6,8 @@ from music_agent.constants import (
     MAX_ITERATION_COUNT,
     MAX_ARTIST_TRACK_COUNT,
     MIN_RECENT_TRACK_RATIO,
-    MIN_GENRE_MATCH_RATIO,
-    RECENT_TRACK_DAYS
+    RECENT_TRACK_DAYS,
+    MIN_PREFERRED_ARTIST_COUNT
 )
 from music_agent.utils import parse_release_date, calculate_percentage
 
@@ -29,9 +29,10 @@ def _validate_preferred_artists(final_tracks, preferred_artists) -> Tuple[Dict[s
                 if pref_artist.lower() in artist_name.lower() or artist_name.lower() in pref_artist.lower():
                     preferred_artist_count[pref_artist] += 1
 
-    # 각 아티스트별 최소 1곡씩 있어야 함
+    # 3명 중 2명 이상만 있으면 통과
     missing_artists = [name for name, count in preferred_artist_count.items() if count == 0]
-    needs_more = bool(missing_artists and len(preferred_artists) > 0)
+    matched_count = len(preferred_artists) - len(missing_artists)
+    needs_more = matched_count < MIN_PREFERRED_ARTIST_COUNT and len(preferred_artists) > 0
 
     return preferred_artist_count, needs_more, missing_artists
 
@@ -78,47 +79,13 @@ def _validate_artist_diversity(final_tracks) -> Tuple[bool, int, Tuple]:
     return artist_diversity_ok, max_count, most_common
 
 
-def _validate_genre_match(final_tracks, user_persona) -> Tuple[float, List[str], bool]:
-    """
-    장르 일치도 검증
-
-    Returns:
-        Tuple[float, List, bool]: (장르 일치율, 부족한 장르 목록, 보완 필요 여부)
-    """
-    preferred_genres = set(user_persona.get("preferred_genres", []))
-
-    # final_tracks의 아티스트들의 장르 수집
-    final_genres = set()
-    artist_details = user_persona.get("artists_details", [])
-
-    # 각 트랙의 아티스트 ID로 장르 매핑
-    for track in final_tracks:
-        for artist in track.at:
-            # artist_details에서 해당 아티스트의 장르 찾기
-            for detail in artist_details:
-                if detail.get("name", "").lower() == artist.atn.lower():
-                    final_genres.update(detail.get("genres", []))
-
-    # 교집합 계산
-    if preferred_genres and final_genres:
-        genre_intersection = preferred_genres.intersection(final_genres)
-        genre_match_ratio = len(genre_intersection) / len(preferred_genres)
-    else:
-        genre_match_ratio = 1.0  # 선호 장르가 없으면 통과
-
-    missing_genres = list(preferred_genres - final_genres)
-    needs_enhancement = genre_match_ratio < MIN_GENRE_MATCH_RATIO and bool(preferred_genres)
-
-    return genre_match_ratio, missing_genres, needs_enhancement
-
 
 def quality_validator_node(state: AgentState) -> dict:
     """
-    최종 선곡 결과를 4가지 기준으로 검증:
-    1. 선호 아티스트 매칭
-    2. 신곡 비율 (최근 1년)
-    3. 아티스트 다양성
-    4. 장르 일치도
+    최종 선곡 결과를 3가지 기준으로 검증:
+    1. 선호 아티스트 매칭 (3명 중 2명 이상)
+    2. 신곡 비율 (최근 1년, 20% 이상)
+    3. 아티스트 다양성 (한 아티스트당 최대 4곡)
     """
     # 반복 횟수 증가
     iteration_count = state.get("iteration_count", 0) + 1
@@ -159,14 +126,6 @@ def quality_validator_node(state: AgentState) -> dict:
     validation_feedback["max_artist_count"] = max_count
     validation_feedback["most_common_artist"] = most_common
 
-    # ===== 검증 4: 장르 일치도 =====
-    genre_ratio, missing_genres, needs_genre = _validate_genre_match(final_tracks, user_persona)
-    validation_feedback["genre_match_ratio"] = genre_ratio
-    validation_feedback["missing_genres"] = missing_genres
-
-    # 장르 불일치 시에도 needs_recent_tracks로 context_agent 트리거
-    if needs_genre:
-        needs_recent_tracks = True
 
     return {
         "iteration_count": iteration_count,
