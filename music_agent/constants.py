@@ -8,7 +8,7 @@ PREFERENCE_TRACK_COUNT = 10  # 선호 아티스트 기반 선곡 목표 수
 CONTEXT_TRACK_COUNT = 15  # 상황 기반 선곡 목표 수
 
 # 품질 검증 기준
-MAX_ARTIST_TRACK_COUNT = 4  # 한 아티스트당 최대 곡 수
+MAX_ARTIST_TRACK_COUNT = 2  # 한 아티스트당 최대 곡 수
 MIN_RECENT_TRACK_RATIO = 0.2  # 최소 신곡 비율 (20%)
 MIN_PREFERRED_ARTIST_COUNT = 2  # 최소 선호 아티스트 매칭 수 (3명 중 2명)
 RECENT_TRACK_DAYS = 365  # 신곡 기준 (최근 1년)
