@@ -43,19 +43,10 @@ def context_agent_node(state: AgentState):
 
   if needs_recent_tracks:
       recent_ratio = validation_feedback.get("recent_track_ratio", 0)
-      missing_genres = validation_feedback.get("missing_genres", [])
-
-      feedback_parts = []
 
       if recent_ratio < MIN_RECENT_TRACK_RATIO:
-          feedback_parts.append("신곡 비율이 낮습니다. 'New 2025', 'Latest 2026', 'New Release' 키워드를 포함한 검색어를 생성하세요.")
-
-      if missing_genres:
-          genres_str = ", ".join(missing_genres[:2])  # 최대 2개 장르만
-          feedback_parts.append(f"다음 장르가 부족합니다: {genres_str}. 이 장르를 상황(목표/위치)과 조합한 검색어를 생성하세요.")
-
-      if feedback_parts:
-          additional_instructions = "\n\n[재검색 요청 - 부족한 부분만 보완]\n- " + "\n- ".join(feedback_parts)
+          additional_instructions = "\n\n[재검색 요청 - 부족한 부분만 보완]"
+          additional_instructions += "\n- 신곡 비율이 낮습니다. 'New 2025', 'Latest 2026', 'New Release' 키워드를 포함한 검색어를 생성하세요."
           additional_instructions += "\n\n이번에는 2-3개 검색어만 생성하세요 (부족한 부분 집중 보완)."
 
   sys_msg = SystemMessage(content=SYSTEM_PROMPT + "\n\n" + context_str + additional_instructions)
